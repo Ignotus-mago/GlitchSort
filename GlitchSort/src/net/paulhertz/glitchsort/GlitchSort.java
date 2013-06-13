@@ -1,3 +1,4 @@
+package net.paulhertz.glitchsort;
 /*
  * Copyright (c) 2011, Paul Hertz This code is free software; you can
  * redistribute it and/or modify it under the terms of the GNU Lesser General
@@ -164,14 +165,10 @@ import controlP5.*;
 
 @SuppressWarnings("serial")
 public class GlitchSort extends PApplet {
-	/** List of different component orders for sorting pixels */
-	enum CompOrder {RGB, RBG, GBR, GRB, BRG, BGR, HSB, HBS, SBH, SHB, BHS, BSH;}
 	/** the current component order to use for sorting */
 	CompOrder compOrder;
 	/** handy variable for stepping through the CompOrder enum */
 	int compOrderIndex = 0;
-	/** List of possible channel swaps between source and target */
-	enum SwapChannel {RR, RG, RB, GR, GG, GB, BR, BG, BB;}
 	/** the current channel swapping scheme for glitchy color fx */
 	SwapChannel swap = SwapChannel.BB;
 	/** List of available color channels, "L" for lightness, since "B" for brightness is taken */
