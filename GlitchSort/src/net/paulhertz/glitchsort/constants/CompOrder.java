@@ -1,4 +1,4 @@
-package net.paulhertz.glitchsort;
+package net.paulhertz.glitchsort.constants;
 
 /** List of different component orders for sorting pixels */
 public enum CompOrder {

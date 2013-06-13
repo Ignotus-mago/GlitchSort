@@ -90,6 +90,8 @@ import ddf.minim.*;
 
 import controlP5.*;
 
+import net.paulhertz.glitchsort.constants.*;
+
 
 // uses pixel sorting, quantization, FFT, etc. to imitate wild glitches, audifies pixels
 // by Paul Hertz, 2012
@@ -171,16 +173,10 @@ public class GlitchSort extends PApplet {
 	int compOrderIndex = 0;
 	/** the current channel swapping scheme for glitchy color fx */
 	SwapChannel swap = SwapChannel.BB;
-	/** List of available color channels, "L" for lightness, since "B" for brightness is taken */
-	enum ChannelNames {R, G, B, H, S, L;}
-	/** List of available sorting methods */
-	enum SorterType {QUICK, SHELL, BUBBLE, INSERT;}
-	/** ordering of pixels in subarray to be sorted, relative to source array */
-	enum SortFormat {ROW, SQUARE, DIAGONAL;}
+	/** ordering of pixels in subarray to be sorted, relative to source array. Not yet in use. */
+	public static enum SortFormat {ROW, SQUARE, DIAGONAL;}
 	/** current format of pixels to use in sorting a subarray of pixels from an image */
-	SortFormat format = SortFormat.ROW;
-	/** List of possible zigzag sorting styles: aligned, random, or four different orientations permuted in blocks of four */
-	enum ZigzagStyle {RANDOM, ALIGN, PERMUTE;}
+	SortFormat sortFormat = SortFormat.ROW;
 	/** default is random orientations for zigzag sorting */
 	ZigzagStyle zigzagStyle = ZigzagStyle.RANDOM;
 	/** a SortSelector offers a strategy to manage different sorting algorithms */
@@ -371,7 +367,7 @@ public class GlitchSort extends PApplet {
 		// image for undo 
 		bakImg = createImage(width, height, ARGB);
 		// the primary tool for sorting
-		sortTool = new SortSelector();
+		sortTool = new SortSelector(this);
 		sortTool.setRandomBreak(randomBreak);
 		// initial order of color channels for sorting
 		compOrder = CompOrder.values()[compOrderIndex];
@@ -4406,12 +4402,14 @@ public class GlitchSort extends PApplet {
 		ShellSorter shell;
 		QuickSorter quick;
 		BubbleSorter bubble;
+		PApplet app;
 		
-		public SortSelector() {
-			shell = new ShellSorter();
-			quick = new QuickSorter();
-			bubble = new BubbleSorter();
-			insert = new InsertSorter();
+		public SortSelector(PApplet app) {
+			this.app = app;
+			shell = new ShellSorter(app);
+			quick = new QuickSorter(app);
+			bubble = new BubbleSorter(app);
+			insert = new InsertSorter(app);
 			this.sorter = quick;
 		}
 		
@@ -4479,316 +4477,21 @@ public class GlitchSort extends PApplet {
 }
 	
 	
-	/** SORTING METHODS **/
-	
-	/**
-	 * Basic sorting interface, implemented by InsertSorter, QuickSorter, ShellSorter and BubbleSorter classes.
-	 */
-	interface Sorter {
-		/**
-		 * Compare two ints, return true if first is less than second.
-		 * @param v   an int 
-		 * @param w   another int to compare with the first
-		 * @return    true if the first int is less than the second, false otherwise
-		 */
-		public boolean less(int v, int w);
-		/**
-		 * Exchange two ints in an array.
-		 * @param a   an array of int
-		 * @param i   an index into the array
-		 * @param j   an index into the array
-		 */
-		public void exch(int[] a, int i, int j);
-		/**
-		 * Compares two ints in an array and exchanges them if the int  
-		 * at the first index is less than the int at the second index.
-		 * @param a   an array of int
-		 * @param i   an index into the array
-		 * @param j   an index into the array
-		 */
-		public void compExch(int[] a, int i, int j);		
-		/**
-		 * Sort an array or int between a left index and a right index.
-		 * Each sorting algorithm has its own implementation of this method that 
-		 * fills in the abstract method in AbstractSorter.
-		 * @param a   an array of int
-		 * @param l   the left (lower) index
-		 * @param r   the right (upper) index
-		 */
-		public void sort(int[] a, int l, int r);
-		/**
-		 * Sorts an array of ints, returning result in the array
-		 * This is a convenience method, implemented in the abstract class AbstractSorter
-		 * @param a   an array of int
-		 */
-		public void sort(int[] a);
-		/**
-		 * @return the breakPoint
-		 */
-		public float getBreakPoint();
-		/**
-		 * @param breakPoint the breakPoint to set
-		 */
-		public void setBreakPoint(float breakPoint);
-		/**
-		 * @return the sorterType
-		 */
-		public SorterType getSorterType();
-	}
-	
-	/**
-	 * Abstract class extended by all sorting classes.
-	 *
-	 */
-	abstract class AbstractSorter implements Sorter {
-		boolean isRandomBreak = false;
-		public float breakPoint = 500.0f;
-		public SorterType sorterType;
-		public long count = 0;
-		int testV = 0;
-		int testW = 0;
-		int[] compV;
-		int[] compW;
-		
-		// permits many different evaluations of the color values of two pixels.
-		// could be optimized, but then it would be harder to understand
-		public boolean less(int v, int w) { 
-		    compV = rgbComponents(v);
-		    compW = rgbComponents(w);
-		    testV = v;
-		    testW = w;
-			switch(compOrder) {
-			case RGB: {
-				break;
-			}
-			case BRG: {
-				testV = composeColor(compV[2], compV[0], compV[1], 255);
-				testW = composeColor(compW[2], compW[0], compW[1], 255);
-				break;
-			}
-			case GBR: {
-				testV = composeColor(compV[1], compV[2], compV[0], 255);
-				testW = composeColor(compW[1], compW[2], compW[0], 255);
-				break;
-			}
-			case GRB: {
-				testV = composeColor(compV[1], compV[0], compV[2], 255);
-				testW = composeColor(compW[1], compW[0], compW[2], 255);
-				break;
-			}
-			case BGR: {
-				testV = composeColor(compV[2], compV[1], compV[0], 255);
-				testW = composeColor(compW[2], compW[1], compW[0], 255);
-				break;
-			}
-			case RBG: {
-				testV = composeColor(compV[0], compV[2], compV[1], 255);
-				testW = composeColor(compW[0], compW[2], compW[1], 255);
-				break;
-			}
-			case HSB: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(hueV, satV, brightV, 255);
-				testW = composeColor(hueW, satW, brightW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			case HBS: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(hueV, brightV, satV, 255);
-				testW = composeColor(hueW, brightW, satW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			case BHS: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(brightV, hueV, satV, 255);
-				testW = composeColor(brightW, hueW, satW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			case SHB: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(satV, hueV, brightV, 255);
-				testW = composeColor(satW, hueW, brightW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			case BSH: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(brightV, satV, hueV, 255);
-				testW = composeColor(brightW, satW, hueW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			case SBH: {
-				colorMode(HSB, 255);
-				int hueV = Math.round(hue(v));
-				int brightV = Math.round(brightness(v));
-				int satV = Math.round(saturation(v));
-				int hueW = Math.round(hue(w));
-				int brightW = Math.round(brightness(w));
-				int satW = Math.round(saturation(w));
-				testV = composeColor(satV, brightV, hueV, 255);
-				testW = composeColor(satW, brightW, hueW, 255);
-				colorMode(RGB, 255);
-				break;
-			}
-			}
-			count++;			
-			if (isAscendingSort) return testV > testW;
-			return testV < testW;
-			// return v < w; 
-		} 
-		
-		public void exch(int[] a, int i, int j) { 
-			if (isSwapChannels) {
-				switch (swap) {
-				case RR: {
-					a[i] = composeColor(compW[0], compV[1], compV[2], 255);
-					a[j] = composeColor(compV[0], compW[1], compW[2], 255);
-					break;
-				}
-				case RG: {
-					a[i] = composeColor(compW[1], compV[1], compV[2], 255);
-					a[j] = composeColor(compW[0], compV[0], compW[2], 255);
-					break;
-				}
-				case RB: {
-					a[i] = composeColor(compW[2], compV[1], compV[2], 255);
-					a[j] = composeColor(compW[0], compW[1], compV[0], 255);
-					break;
-				}
-				case GR: {
-					a[i] = composeColor(compV[0], compW[0], compV[2], 255);
-					a[j] = composeColor(compV[1], compW[1], compW[2], 255);
-					break;
-				}
-				case GG: {
-					a[i] = composeColor(compV[0], compW[1], compV[2], 255);
-					a[j] = composeColor(compW[0], compV[1], compW[2], 255);
-					break;
-				}
-				case GB: {
-					a[i] = composeColor(compV[0], compW[2], compV[2], 255);
-					a[j] = composeColor(compW[0], compW[1], compV[1], 255);
-					break;
-				}
-				case BR: {
-					a[i] = composeColor(compV[0], compV[1], compW[0], 255);
-					a[j] = composeColor(compV[2], compW[1], compW[2], 255);
-					break;
-				}
-				case BG: {
-					a[i] = composeColor(compV[0], compV[1], compV[2], 255);
-					a[j] = composeColor(compW[0], compW[1], compW[2], 255);
-					break;
-				}
-				case BB: {
-					a[i] = composeColor(compV[0], compV[1], compW[1], 255);
-					a[j] = composeColor(compW[0], compW[2], compV[2], 255);
-					break;
-				}
-				}
-			}
-			else {
-//				the following two lines should also be equivalent to a swap
-/*				a[i] = composeColor(compV[0], compV[1], compV[2], 255);
-				a[j] = composeColor(compW[0], compW[1], compW[2], 255)
-*/				 // swap
-				int t = a[i]; 
-				a[i] = a[j]; 
-				a[j] = t; 
-			}
-		} 
-
-		public void compExch(int[] a, int i, int j) { 
-			if (less(a[j], a[i])) exch (a, i, j); 
-		} 
-
-		/**
-		 * @return the isRandomBreak
-		 */
-		public boolean isRandomBreak() {
-			return isRandomBreak;
-		}
-
-		/**
-		 * @param isRandomBreak the isRandomBreak to set
-		 */
-		public void setRandomBreak(boolean isRandomBreak) {
-			this.isRandomBreak = isRandomBreak;
-		}
-
-		public float getBreakPoint() {
-			return breakPoint;
-		}
-
-		public void setBreakPoint(float breakPoint) {
-			this.breakPoint = breakPoint;
-		}
-		
-		public boolean breakTest() {
-			return (breakPoint < random(0, 1000));
-		}
-
-		public SorterType getSorterType() {
-			return sorterType;
-		}
-
-		// this method is different for each algorithm
-		public abstract void sort(int[] a, int l, int r);
-
-		// this convenience method permits sorting of any arbitrary array of ints
-		public void sort(int[] a) {
-			sort(a, 0, a.length - 1);
-		}
-		
-	}
 
 	/**
 	 * Performs an insert sort on an array of ints. Insert sort proceeds through
 	 * the array from beginning to end, comparing every number against all remaining numbers. 
 	 * It is much slower than quick sort or shell sort.
 	 */
-	class InsertSorter extends AbstractSorter implements Sorter {
+	class InsertSorter extends AbstractColorSorter implements Sorter {
 		
-		public InsertSorter(float breakPoint) {
+		public InsertSorter(PApplet app, float breakPoint) {
+			super(app);
 			this.breakPoint = breakPoint;
 			this.sorterType = SorterType.INSERT;
 		}
-		public InsertSorter() {
-			this(999.0f);
+		public InsertSorter(PApplet app) {
+			this(app, 999.0f);
 		}
 
 		@Override
@@ -4818,16 +4521,17 @@ public class GlitchSort extends PApplet {
 	 * arrays (most pictures, in other words) but will crawl if fed an array that is already sorted
 	 * or nearly sorted (or inverse sorted or nearly inverse sorted). 
 	 */
-	class QuickSorter extends AbstractSorter implements Sorter {
+	class QuickSorter extends AbstractColorSorter implements Sorter {
 
-		public QuickSorter(float breakPoint) {
+		public QuickSorter(PApplet app, float breakPoint) {
+			super(app);
 			this.breakPoint = breakPoint;
 			this.sorterType = SorterType.QUICK;
 		}
-		public QuickSorter() {
-			this(144.0f);
+		public QuickSorter(PApplet app) {
+			this(app, 144.0f);
 		}
-		
+				
 		@Override
 		public void sort(int[] a, int l, int r) { 
 			if (r <= l) return;
@@ -4865,17 +4569,18 @@ public class GlitchSort extends PApplet {
 	 * it makes more interesting glitches than InsertSorter and different from QuickSorter.
 	 * Vary ratio and divisor to get different partitions of the pixels
 	 */
-	class ShellSorter extends AbstractSorter implements Sorter {
+	class ShellSorter extends AbstractColorSorter implements Sorter {
 		int h;
 		int ratio = 3;
 		int divisor = 9;
 
-		public ShellSorter(float breakPoint) {
+		public ShellSorter(PApplet app, float breakPoint) {
+			super(app);
 			this.breakPoint = breakPoint;
 			this.sorterType = SorterType.SHELL;
 		}
-		public ShellSorter() {
-			this(996.0f);
+		public ShellSorter(PApplet app) {
+			this(app, 996.0f);
 		}
 		
 		@Override
@@ -4925,14 +4630,15 @@ public class GlitchSort extends PApplet {
 	 * Bubble sort is very slow, but the way it operates creates some interesting glitches. 
 	 * Color-swapping also looks good with this sorting method.
 	 */
-	class BubbleSorter extends AbstractSorter implements Sorter {
+	class BubbleSorter extends AbstractColorSorter implements Sorter {
 	
-		public BubbleSorter(float breakPoint) {
+		public BubbleSorter(PApplet app, float breakPoint) {
+			super(app);
 			this.breakPoint = breakPoint;
 			this.sorterType = SorterType.BUBBLE;
 		}
-		public BubbleSorter() {
-			this(990.0f);
+		public BubbleSorter(PApplet app) {
+			this(app, 990.0f);
 		}
 		
 		@Override

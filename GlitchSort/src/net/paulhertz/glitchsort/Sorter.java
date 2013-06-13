@@ -3,9 +3,12 @@
  */
 package net.paulhertz.glitchsort;
 
+import net.paulhertz.glitchsort.constants.SorterType;
+
 /**
  * @author paulhz
- * Basic sorting interface, implemented by InsertSorter, QuickSorter, ShellSorter and BubbleSorter classes.
+ * Basic sorting interface, implemented by AbstractColorSorter and its children, 
+ * the InsertSorter, QuickSorter, ShellSorter and BubbleSorter classes.
  */
 public interface Sorter {
 	/**
@@ -54,7 +57,9 @@ public interface Sorter {
 	 */
 	public void setBreakPoint(float breakPoint);
 	/**
-	 * @return the sorterType
+	 * 
+	 * @return the sorterType associated with a particular sorting algorithm
 	 */
 	public SorterType getSorterType();
+
 }

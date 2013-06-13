@@ -4,34 +4,39 @@
 package net.paulhertz.glitchsort;
 
 import processing.core.*;
+import net.paulhertz.glitchsort.constants.*;
 
 /**
  * @author paulhz
  *
  */
-public 	abstract class AbstractColorSorter implements Sorter {
+public abstract class AbstractColorSorter implements Sorter {
 	boolean isRandomBreak = false;
+	boolean isSwapChannels = false;
+	boolean isAscendingSort = false;
 	public float breakPoint = 500.0f;
-	public SorterType sorterType;
+	SorterType sorterType;
+	public CompOrder compOrder = CompOrder.RGB;
+	public SwapChannel swap;
 	public long count = 0;
 	int testV = 0;
 	int testW = 0;
 	int[] compV;
 	int[] compW;
-	private GlitchSort app;
+	private PApplet app;
 	
-	public AbstractColorSorter(GlitchSort app) {
+	public AbstractColorSorter(PApplet app) {
 		this.app = app;
 	}
 	
 	// permits many different evaluations of the color values of two pixels.
 	// could be optimized, but then it would be harder to understand
-	public boolean less(int v, int w, boolean isAscendingSort) { 
+	public boolean less(int v, int w) { 
 	    compV = rgbComponents(v);
 	    compW = rgbComponents(w);
 	    testV = v;
 	    testW = w;
-		switch(app.compOrder) {
+		switch(compOrder) {
 		case RGB: {
 			break;
 		}
@@ -182,7 +187,7 @@ public 	abstract class AbstractColorSorter implements Sorter {
 	}
 
 	
-	public void exch(int[] a, int i, int j, boolean isSwapChannels, SwapChannel swap) { 
+	public void exch(int[] a, int i, int j) { 
 		if (isSwapChannels) {
 			switch (swap) {
 			case RR: {
@@ -246,6 +251,16 @@ public 	abstract class AbstractColorSorter implements Sorter {
 	public void compExch(int[] a, int i, int j) { 
 		if (less(a[j], a[i])) exch (a, i, j); 
 	} 
+	
+	// this method is different for each algorithm
+	public abstract void sort(int[] a, int l, int r);
+
+	// this convenience method permits sorting of any arbitrary array of ints
+	public void sort(int[] a) {
+		sort(a, 0, a.length - 1);
+	}
+	
+	/***** getters and setters and other methods specific to instance variables *****/
 
 	/**
 	 * @return the isRandomBreak
@@ -273,17 +288,65 @@ public 	abstract class AbstractColorSorter implements Sorter {
 		return (breakPoint < app.random(0, 1000));
 	}
 
+	/**
+	 * @return the isSwapChannels
+	 */
+	public boolean isSwapChanels() {
+		return isSwapChannels;
+	}
+
+	/**
+	 * @param isSwapChannels the isSwapChannels to set
+	 */
+	public void setSwapChanels(boolean isSwapChanels) {
+		this.isSwapChannels = isSwapChanels;
+	}
+
+	/**
+	 * @return the isAscendingSort
+	 */
+	public boolean isAscendingSort() {
+		return isAscendingSort;
+	}
+
+	/**
+	 * @param isAscendingSort the isAscendingSort to set
+	 */
+	public void setAscendingSort(boolean isAscendingSort) {
+		this.isAscendingSort = isAscendingSort;
+	}
+
 	public SorterType getSorterType() {
 		return sorterType;
 	}
-
-	// this method is different for each algorithm
-	public abstract void sort(int[] a, int l, int r);
-
-	// this convenience method permits sorting of any arbitrary array of ints
-	public void sort(int[] a) {
-		sort(a, 0, a.length - 1);
-	}
 	
+	/**
+	 * @return the compOrder
+	 */
+	public CompOrder getCompOrder() {
+		return compOrder;
+	}
+
+	/**
+	 * @param compOrder the compOrder to set
+	 */
+	public void setCompOrder(CompOrder compOrder) {
+		this.compOrder = compOrder;
+	}
+
+	/**
+	 * @return the swap
+	 */
+	public SwapChannel getSwap() {
+		return swap;
+	}
+
+	/**
+	 * @param swap the swap to set
+	 */
+	public void setSwap(SwapChannel swap) {
+		this.swap = swap;
+	}
+
 }
 
