@@ -1788,6 +1788,7 @@ public class GlitchSort extends PApplet {
 		sortTool.setControlState();
 		backup();
 		img.loadPixels();
+		this.sortTool.setControlState();
 		if (isCycleGlitch) {
 			IntRange range;
 			if (ranger.hasNext()) {
@@ -4007,10 +4008,10 @@ public class GlitchSort extends PApplet {
     		img.loadPixels();
     		int[] pix = zz.pluck(img.pixels, img.width, img.height, mapX, mapY);
     		// do something to a single block
-    		if ('g' == lastCommand) this.sortTool.sort(pix);
+    		if ('g' == lastCommand) { this.sortTool.setControlState(); this.sortTool.sort(pix);}
     		else if ('k' == lastCommand) fftStatGlitch(pix, ChannelNames.L);
     		else if ('j' == lastCommand) fftEqGlitch(pix, ChannelNames.L);
-    		else this.sortTool.sort(pix);
+    		else {this.sortTool.setControlState(); this.sortTool.sort(pix);}
     		zz.plant(img.pixels, pix, img.width, img.height, mapX, mapY);
     		img.updatePixels();
     		// necessary to call fitPixels to show updated image
@@ -4163,6 +4164,7 @@ public class GlitchSort extends PApplet {
        	int oh = (img.height - h) / 2;
  		backup();
 		img.loadPixels();
+		this.sortTool.setControlState();
 		println("--- "+ zigzagStyle.name() +" zigzag ----");
 		if (ZigzagStyle.PERMUTE != zigzagStyle) {
 			for (int y = 0; y < dh; y++) {
@@ -4202,6 +4204,7 @@ public class GlitchSort extends PApplet {
 			zzList[3] = zz;
 			int dw2 = dw/2;
 			int dh2 = dh/2;
+			this.sortTool.setControlState();
 			for (int y = 0; y < dh2; y++) {
 				for (int x = 0; x < dw2; x++) {
 			    	// a quick way to sort only a determined percentage of cells
