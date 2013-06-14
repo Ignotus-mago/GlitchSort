@@ -298,8 +298,8 @@ public abstract class AbstractColorSorter implements Sorter {
 	/**
 	 * @param isSwapChannels the isSwapChannels to set
 	 */
-	public void setSwapChanels(boolean isSwapChanels) {
-		this.isSwapChannels = isSwapChanels;
+	public void setSwapChannels(boolean isSwapChannels) {
+		this.isSwapChannels = isSwapChannels;
 	}
 
 	/**
