@@ -1782,6 +1782,10 @@ public class GlitchSort extends PApplet {
 			println("No image is available for sorting or the ranger is not initialized (sortPixels method)");
 			return;
 		}
+		// TODO implement methods to set sorter values for color swapping, sort order, component order
+		// for the moment, we do it by providing the sortTool with top level access to the GlitchSort instance
+		// and pulling the values from local variables. It would be more efficient to do this only on control panel changes. 
+		sortTool.setControlState();
 		backup();
 		img.loadPixels();
 		if (isCycleGlitch) {
