@@ -8,14 +8,14 @@ import net.paulhertz.glitchsort.constants.*;
  *
  */
 class SortSelector {
-	Sorter sorter;
+	AbstractColorSorter sorter;
 	InsertSorter insert;
 	ShellSorter shell;
 	QuickSorter quick;
 	BubbleSorter bubble;
-	PApplet app;
+	GlitchSort app;
 	
-	public SortSelector(PApplet app) {
+	public SortSelector(GlitchSort app) {
 		this.app = app;
 		shell = new ShellSorter(app);
 		quick = new QuickSorter(app);
@@ -59,6 +59,15 @@ class SortSelector {
 		case INSERT: { sorter = insert; break; }
 		default: { sorter = quick; }
 		}
+	}
+	
+	public void setControlState() {
+		sorter.setAscendingSort(app.isAscendingSort);
+		sorter.setBreakPoint(app.breakPoint);
+		sorter.setCompOrder(app.compOrder);
+		sorter.setRandomBreak(app.randomBreak);
+		sorter.setSwapChannels(app.isSwapChannels);
+		sorter.setSwap(app.swap);
 	}
 
 	public void sort(int[] a, int l, int r) {
