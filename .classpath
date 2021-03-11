@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="GlitchSort/src"/>
+	<classpathentry kind="lib" path="/GlitchSort2/libs/core.jar"/>
+	<classpathentry kind="lib" path="/GlitchSort2/libs/minim/library/minim.jar"/>
+	<classpathentry kind="lib" path="/GlitchSort2/libs/controlP5.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
